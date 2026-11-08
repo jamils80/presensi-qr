@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Presensi QR Code</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    body { background-color: #f4f6f9; padding-top: 20px; }
+    #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 8px; overflow: hidden; background: #000; min-height: 280px; }
+    .card { max-width: 500px; margin: 0 auto; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    #hiddenFrame { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card p-4 text-center">
+      <h3 class="mb-3">System Presensi QR Code</h3>
+      <p class="text-muted">Arahkan QR Code Siswa ke Kamera</p>
+      
+      <div class="mb-3" id="camSelectWrapper">
+        <select id="cameraSelect" class="form-select" onchange="switchCamera(this.value)">
+          <option value="">Memuat Kamera...</option>
+        </select>
+      </div>
+
+      <div id="reader"></div>
+      <div id="result" class="mt-4 alert d-none" role="alert"></div>
+    </div>
+  </div>
+
+  <!-- Form & Frame Tersembunyi untuk Bypass CORS -->
+  <form id="hiddenForm" method="GET" target="hiddenFrame">
+    <input type="hidden" name="nis" id="hiddenNis">
+  </form>
+  <iframe id="hiddenFrame" name="hiddenFrame"></iframe>
+
+  <script>
+    // PASANG URL WEB APP APPS SCRIPT ANDA DI SINI
+    const WEB_APP_URL = "PASANG_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI";
+
+    let html5QrCode;
+    let isProcessing = false;
+
+    // Dengarkan balasan data dari IFrame
+    window.addEventListener("message", function(event) {
+      if (!event.data || typeof event.data !== "object") return;
+      
+      const response = event.data;
+      const resultDiv = document.getElementById('result');
+      
+      if (response.success) {
+        resultDiv.className = 'mt-4 alert alert-success';
+      } else {
+        resultDiv.className = 'mt-4 alert alert-warning';
+      }
+      resultDiv.innerText = response.message;
+      
+      setTimeout(() => { isProcessing = false; }, 3000);
+    });
+
+    function sendPresensiForm(nis) {
+      const hiddenForm = document.getElementById('hiddenForm');
+      const hiddenNis = document.getElementById('hiddenNis');
+      
+      hiddenForm.action = WEB_APP_URL;
+      hiddenNis.value = nis;
+      hiddenForm.submit();
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      const resultDiv = document.getElementById('result');
+      resultDiv.className = 'mt-4 alert alert-info';
+      resultDiv.classList.remove('d-none');
+      resultDiv.innerText = 'Memproses NIS: ' + decodedText + '...';
+
+      sendPresensiForm(decodedText);
+    }
+
+    function startCamera(cameraId) {
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+          html5QrCode.start(cameraId, config, onScanSuccess);
+        });
+      } else {
+        html5QrCode.start(cameraId, config, onScanSuccess);
+      }
+    }
+
+    function switchCamera(cameraId) {
+      if (cameraId) startCamera(cameraId);
+    }
+
+    window.onload = function() {
+      html5QrCode = new Html5Qrcode("reader");
+
+      Html5Qrcode.getCameras().then(cameras => {
+        const select = document.getElementById('cameraSelect');
+        select.innerHTML = '';
+
+        if (cameras && cameras.length > 0) {
+          cameras.forEach((cam, index) => {
+            const opt = document.createElement('option');
+            opt.value = cam.id;
+            opt.text = cam.label || `Kamera ${index + 1}`;
+            select.appendChild(opt);
+          });
+
+          const droidCam = cameras.find(c => c.label.toLowerCase().includes('droidcam'));
+          const defaultCam = droidCam ? droidCam.id : cameras[0].id;
+          
+          select.value = defaultCam;
+          startCamera(defaultCam);
+        } else {
+          startCamera({ facingMode: "environment" });
+        }
+      }).catch(err => {
+        startCamera({ facingMode: "environment" });
+      });
+    };
+  </script>
+</body>
+</html>
