@@ -10,7 +10,6 @@
     body { background-color: #f4f6f9; padding-top: 20px; }
     #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 8px; overflow: hidden; background: #000; min-height: 280px; }
     .card { max-width: 500px; margin: 0 auto; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    #hiddenFrame { display: none; }
   </style>
 </head>
 <body>
@@ -30,43 +29,42 @@
     </div>
   </div>
 
-  <!-- Form & Frame Tersembunyi untuk Bypass CORS -->
-  <form id="hiddenForm" method="GET" target="hiddenFrame">
-    <input type="hidden" name="nis" id="hiddenNis">
-  </form>
-  <iframe id="hiddenFrame" name="hiddenFrame"></iframe>
-
   <script>
-    // PASANG URL WEB APP APPS SCRIPT ANDA DI SINI
+    // MASUKKAN URL APPS SCRIPT BERAKHIRAN /exec ANDA DI SINI
     const WEB_APP_URL = "PASANG_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI";
 
     let html5QrCode;
     let isProcessing = false;
 
-    // Dengarkan balasan data dari IFrame
-    window.addEventListener("message", function(event) {
-      if (!event.data || typeof event.data !== "object") return;
-      
-      const response = event.data;
-      const resultDiv = document.getElementById('result');
-      
-      if (response.success) {
-        resultDiv.className = 'mt-4 alert alert-success';
-      } else {
-        resultDiv.className = 'mt-4 alert alert-warning';
-      }
-      resultDiv.innerText = response.message;
-      
-      setTimeout(() => { isProcessing = false; }, 3000);
-    });
+    // Fungsi pengiriman JSONP yang kompatibel dengan domain belajar.id
+    function kirimPresensiJSONP(nis) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
+        const script = document.createElement('script');
 
-    function sendPresensiForm(nis) {
-      const hiddenForm = document.getElementById('hiddenForm');
-      const hiddenNis = document.getElementById('hiddenNis');
-      
-      hiddenForm.action = WEB_APP_URL;
-      hiddenNis.value = nis;
-      hiddenForm.submit();
+        const timeout = setTimeout(() => {
+          delete window[callbackName];
+          if (script.parentNode) document.body.removeChild(script);
+          reject(new Error('Koneksi Timeout. Pastikan Deploy Apps Script berakhiran /exec!'));
+        }, 10000);
+
+        window[callbackName] = function(data) {
+          clearTimeout(timeout);
+          delete window[callbackName];
+          if (script.parentNode) document.body.removeChild(script);
+          resolve(data);
+        };
+
+        script.onerror = function() {
+          clearTimeout(timeout);
+          delete window[callbackName];
+          if (script.parentNode) document.body.removeChild(script);
+          reject(new Error('Gagal terhubung ke Apps Script. Periksa URL Web App.'));
+        };
+
+        script.src = WEB_APP_URL + '?nis=' + encodeURIComponent(nis) + '&callback=' + callbackName;
+        document.body.appendChild(script);
+      });
     }
 
     function onScanSuccess(decodedText, decodedResult) {
@@ -78,7 +76,21 @@
       resultDiv.classList.remove('d-none');
       resultDiv.innerText = 'Memproses NIS: ' + decodedText + '...';
 
-      sendPresensiForm(decodedText);
+      kirimPresensiJSONP(decodedText)
+        .then(response => {
+          if (response.success) {
+            resultDiv.className = 'mt-4 alert alert-success';
+          } else {
+            resultDiv.className = 'mt-4 alert alert-warning';
+          }
+          resultDiv.innerText = response.message;
+          setTimeout(() => { isProcessing = false; }, 3000);
+        })
+        .catch(error => {
+          resultDiv.className = 'mt-4 alert alert-danger';
+          resultDiv.innerText = error.message;
+          setTimeout(() => { isProcessing = false; }, 3000);
+        });
     }
 
     function startCamera(cameraId) {
@@ -111,11 +123,9 @@
             select.appendChild(opt);
           });
 
-          const droidCam = cameras.find(c => c.label.toLowerCase().includes('droidcam'));
-          const defaultCam = droidCam ? droidCam.id : cameras[0].id;
-          
-          select.value = defaultCam;
-          startCamera(defaultCam);
+          // Otomatis memilih kamera pertama / DroidCam
+          select.value = cameras[0].id;
+          startCamera(cameras[0].id);
         } else {
           startCamera({ facingMode: "environment" });
         }
