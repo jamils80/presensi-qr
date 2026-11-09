@@ -44,12 +44,12 @@
       resultDiv.classList.remove('d-none');
       resultDiv.innerText = 'Memproses NIS: ' + decodedText + '...';
 
-      // Bersihkan URL dari multi-account index (/u/1/)
       const cleanUrl = WEB_APP_URL.replace(/\/u\/\d+\//, '/');
-      const currentUrl = window.location.href.split('?')[0];
+      
+      // Mengunci target kembali ke alamat GitHub Pages
+      const targetGithubUrl = "https://jamils80.github.io/presensi-qr/";
 
-      // Redirect ke Apps Script membawa NIS & URL asal
-      window.location.href = cleanUrl + '?nis=' + encodeURIComponent(decodedText) + '&redirect_url=' + encodeURIComponent(currentUrl);
+      window.location.href = cleanUrl + '?nis=' + encodeURIComponent(decodedText) + '&redirect_url=' + encodeURIComponent(targetGithubUrl);
     }
 
     function initCamera() {
