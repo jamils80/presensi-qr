@@ -18,7 +18,7 @@
       <h3 class="mb-3">System Presensi QR Code</h3>
       <p class="text-muted">Arahkan QR Code Siswa ke Kamera</p>
       
-      <div class="mb-3" id="camSelectWrapper">
+      <div class="mb-3">
         <select id="cameraSelect" class="form-select" onchange="switchCamera(this.value)">
           <option value="">Memuat Kamera...</option>
         </select>
@@ -30,44 +30,32 @@
   </div>
 
   <script>
-    // MASUKKAN URL APPS SCRIPT BERAKHIRAN /exec ANDA DI SINI
+    // URL WEB APP APPS SCRIPT
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHhTfb4ENIEkA_QJEiT8dhYLeysGrXxZw7yH--oE1-PZ0vnmMm1vVpT1jcd3toRbwN/exec";
 
     let html5QrCode;
     let isProcessing = false;
 
-    // Fungsi pengiriman JSONP yang kompatibel dengan domain belajar.id
-    function kirimPresensiJSONP(nis) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'jsonp_cb_' + Math.round(100000 * Math.random());
-        const script = document.createElement('script');
+    // Menangkap pesan balasan setelah presensi terkirim dari Apps Script
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const status = urlParams.get('status');
+      const msg = urlParams.get('msg');
+      const resultDiv = document.getElementById('result');
 
-        const timeout = setTimeout(() => {
-          delete window[callbackName];
-          if (script.parentNode) document.body.removeChild(script);
-          reject(new Error('Koneksi Timeout. Pastikan Deploy Apps Script berakhiran /exec!'));
-        }, 10000);
+      if (status && msg) {
+        resultDiv.className = 'mt-4 alert alert-' + (status === 'success' ? 'success' : 'warning');
+        resultDiv.classList.remove('d-none');
+        resultDiv.innerText = msg;
+        
+        // Bersihkan parameter status dari alamat browser
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
 
-        window[callbackName] = function(data) {
-          clearTimeout(timeout);
-          delete window[callbackName];
-          if (script.parentNode) document.body.removeChild(script);
-          resolve(data);
-        };
+      initCamera();
+    };
 
-        script.onerror = function() {
-          clearTimeout(timeout);
-          delete window[callbackName];
-          if (script.parentNode) document.body.removeChild(script);
-          reject(new Error('Gagal terhubung ke Apps Script. Periksa URL Web App.'));
-        };
-
-        script.src = WEB_APP_URL + '?nis=' + encodeURIComponent(nis) + '&callback=' + callbackName;
-        document.body.appendChild(script);
-      });
-    }
-
-    function onScanSuccess(decodedText, decodedResult) {
+    function onScanSuccess(decodedText) {
       if (isProcessing) return;
       isProcessing = true;
 
@@ -76,39 +64,14 @@
       resultDiv.classList.remove('d-none');
       resultDiv.innerText = 'Memproses NIS: ' + decodedText + '...';
 
-      kirimPresensiJSONP(decodedText)
-        .then(response => {
-          if (response.success) {
-            resultDiv.className = 'mt-4 alert alert-success';
-          } else {
-            resultDiv.className = 'mt-4 alert alert-warning';
-          }
-          resultDiv.innerText = response.message;
-          setTimeout(() => { isProcessing = false; }, 3000);
-        })
-        .catch(error => {
-          resultDiv.className = 'mt-4 alert alert-danger';
-          resultDiv.innerText = error.message;
-          setTimeout(() => { isProcessing = false; }, 3000);
-        });
+      // Direct Redirect untuk bypass penuh blokir CORS / belajar.id
+      const currentUrl = window.location.href.split('?')[0];
+      const targetUrl = WEB_APP_URL + '?nis=' + encodeURIComponent(decodedText) + '&redirect_url=' + encodeURIComponent(currentUrl);
+      
+      window.location.href = targetUrl;
     }
 
-    function startCamera(cameraId) {
-      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-      if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => {
-          html5QrCode.start(cameraId, config, onScanSuccess);
-        });
-      } else {
-        html5QrCode.start(cameraId, config, onScanSuccess);
-      }
-    }
-
-    function switchCamera(cameraId) {
-      if (cameraId) startCamera(cameraId);
-    }
-
-    window.onload = function() {
+    function initCamera() {
       html5QrCode = new Html5Qrcode("reader");
 
       Html5Qrcode.getCameras().then(cameras => {
@@ -122,8 +85,6 @@
             opt.text = cam.label || `Kamera ${index + 1}`;
             select.appendChild(opt);
           });
-
-          // Otomatis memilih kamera pertama / DroidCam
           select.value = cameras[0].id;
           startCamera(cameras[0].id);
         } else {
@@ -132,7 +93,20 @@
       }).catch(err => {
         startCamera({ facingMode: "environment" });
       });
-    };
+    }
+
+    function startCamera(cameraId) {
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => { html5QrCode.start(cameraId, config, onScanSuccess); });
+      } else {
+        html5QrCode.start(cameraId, config, onScanSuccess);
+      }
+    }
+
+    function switchCamera(cameraId) {
+      if (cameraId) startCamera(cameraId);
+    }
   </script>
 </body>
 </html>
