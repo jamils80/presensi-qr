@@ -30,29 +30,10 @@
   </div>
 
   <script>
-    // URL Web App Utama Anda
-    const RAW_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHhTfb4ENIEkA_QJEiT8dhYLeysGrXxZw7yH--oE1-PZ0vnmMm1vVpT1jcd3toRbwN/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHhTfb4ENIEkA_QJEiT8dhYLeysGrXxZw7yH--oE1-PZ0vnmMm1vVpT1jcd3toRbwN/exec";
 
     let html5QrCode;
     let isProcessing = false;
-
-    window.onload = function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const status = urlParams.get('status');
-      const msg = urlParams.get('msg');
-      const resultDiv = document.getElementById('result');
-
-      if (status && msg) {
-        resultDiv.className = 'mt-4 alert alert-' + (status === 'success' ? 'success' : 'warning');
-        resultDiv.classList.remove('d-none');
-        resultDiv.innerText = msg;
-        
-        // Hapus parameter url setelah status ditampilkan
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
-      initCamera();
-    };
 
     function onScanSuccess(decodedText) {
       if (isProcessing) return;
@@ -63,14 +44,12 @@
       resultDiv.classList.remove('d-none');
       resultDiv.innerText = 'Memproses NIS: ' + decodedText + '...';
 
-      // Hapus potensi konflik multi-login akun (/u/0/, /u/1/, dll)
-      let cleanUrl = RAW_WEB_APP_URL.replace(/\/u\/\d+\//, '/');
-
+      // Bersihkan URL dari multi-account index (/u/1/)
+      const cleanUrl = WEB_APP_URL.replace(/\/u\/\d+\//, '/');
       const currentUrl = window.location.href.split('?')[0];
-      const targetUrl = cleanUrl + '?nis=' + encodeURIComponent(decodedText) + '&redirect_url=' + encodeURIComponent(currentUrl);
-      
-      // Eksekusi redirect halaman penuh
-      window.location.href = targetUrl;
+
+      // Redirect ke Apps Script membawa NIS & URL asal
+      window.location.href = cleanUrl + '?nis=' + encodeURIComponent(decodedText) + '&redirect_url=' + encodeURIComponent(currentUrl);
     }
 
     function initCamera() {
@@ -109,6 +88,10 @@
     function switchCamera(cameraId) {
       if (cameraId) startCamera(cameraId);
     }
+
+    window.onload = function() {
+      initCamera();
+    };
   </script>
 </body>
 </html>
