@@ -30,13 +30,12 @@
   </div>
 
   <script>
-    // URL WEB APP APPS SCRIPT
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHhTfb4ENIEkA_QJEiT8dhYLeysGrXxZw7yH--oE1-PZ0vnmMm1vVpT1jcd3toRbwN/exec";
+    // URL Web App Utama Anda
+    const RAW_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHhTfb4ENIEkA_QJEiT8dhYLeysGrXxZw7yH--oE1-PZ0vnmMm1vVpT1jcd3toRbwN/exec";
 
     let html5QrCode;
     let isProcessing = false;
 
-    // Menangkap pesan balasan setelah presensi terkirim dari Apps Script
     window.onload = function() {
       const urlParams = new URLSearchParams(window.location.search);
       const status = urlParams.get('status');
@@ -48,7 +47,7 @@
         resultDiv.classList.remove('d-none');
         resultDiv.innerText = msg;
         
-        // Bersihkan parameter status dari alamat browser
+        // Hapus parameter url setelah status ditampilkan
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
@@ -64,10 +63,13 @@
       resultDiv.classList.remove('d-none');
       resultDiv.innerText = 'Memproses NIS: ' + decodedText + '...';
 
-      // Direct Redirect untuk bypass penuh blokir CORS / belajar.id
+      // Hapus potensi konflik multi-login akun (/u/0/, /u/1/, dll)
+      let cleanUrl = RAW_WEB_APP_URL.replace(/\/u\/\d+\//, '/');
+
       const currentUrl = window.location.href.split('?')[0];
-      const targetUrl = WEB_APP_URL + '?nis=' + encodeURIComponent(decodedText) + '&redirect_url=' + encodeURIComponent(currentUrl);
+      const targetUrl = cleanUrl + '?nis=' + encodeURIComponent(decodedText) + '&redirect_url=' + encodeURIComponent(currentUrl);
       
+      // Eksekusi redirect halaman penuh
       window.location.href = targetUrl;
     }
 
