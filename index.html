@@ -225,6 +225,9 @@
         return;
       }
 
+      // Link Direct Gambar Logo Pemprov Jawa Timur dari Google Drive Anda
+      const logoUrl = "https://lh3.googleusercontent.com/d/1fidEkrCy5VvkmlMfreTWFkpCnIhEN2le";
+
       let tableRows = '';
       let no = 1;
 
@@ -248,27 +251,62 @@
         <head>
           <title>Laporan Presensi Guru - ${kegiatan} (${bulanTeks} ${tahun})</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 25px; color: #000; }
-            .header-kop {
-              text-align: center;
-              border-bottom: 3px double #000;
-              padding-bottom: 10px;
-              margin-bottom: 20px;
-            }
-            .header-kop h3 { margin: 0; font-size: 14pt; font-weight: bold; text-transform: uppercase; }
-            .header-kop h2 { margin: 2px 0; font-size: 16pt; font-weight: bold; text-transform: uppercase; }
-            .header-kop h1 { margin: 2px 0; font-size: 18pt; font-weight: bold; text-transform: uppercase; }
-            .header-kop p { margin: 4px 0 0 0; font-size: 9pt; font-style: italic; }
+            body { font-family: 'Times New Roman', Times, serif; padding: 20px; color: #000; }
             
-            .title-laporan { text-align: center; margin-bottom: 20px; }
-            .title-laporan h4 { margin: 0; text-transform: uppercase; font-size: 13pt; text-decoration: underline; }
+            /* SCRIPT KOP SURAT SESUAI GAMBAR */
+            .kop-container {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              position: relative;
+              margin-bottom: 2px;
+            }
+            .kop-logo {
+              width: 85px;
+              height: auto;
+              margin-right: 15px;
+            }
+            .kop-text {
+              flex-grow: 1;
+              text-align: center;
+              margin-right: 85px; /* Menyeimbangkan posisi teks dengan lebar logo */
+            }
+            .kop-text .h-pemprov { font-size: 13pt; font-weight: normal; margin: 0; letter-spacing: 0.5px; }
+            .kop-text .h-dinas { font-size: 13pt; font-weight: normal; margin: 0; letter-spacing: 0.5px; }
+            .kop-text .h-sekolah { font-size: 15pt; font-weight: bold; margin: 2px 0 0 0; text-transform: uppercase; }
+            .kop-text .h-purwoasri { font-size: 15pt; font-weight: bold; margin: 0; text-transform: uppercase; }
+            .kop-text .h-alamat { font-size: 10.5pt; margin: 3px 0 0 0; }
+            .kop-text .h-email { font-size: 10.5pt; margin: 1px 0 0 0; }
+            .kop-text .h-email a { color: #000; text-decoration: underline; }
+            
+            .kop-subfooter {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              margin-top: 2px;
+              padding: 0 10px;
+            }
+            .h-kediri { font-size: 13pt; font-weight: bold; text-align: center; flex-grow: 1; margin-left: 90px; }
+            .h-kodepos { font-size: 10pt; font-weight: normal; }
+
+            /* GARIS GANDA KOP SURAT */
+            .garis-kop {
+              border: 0;
+              border-top: 3px solid #000;
+              border-bottom: 1px solid #000;
+              height: 3px;
+              margin: 4px 0 20px 0;
+            }
+
+            .title-laporan { text-align: center; margin-bottom: 20px; font-family: Arial, sans-serif; }
+            .title-laporan h4 { margin: 0; text-transform: uppercase; font-size: 12pt; text-decoration: underline; }
             .title-laporan p { margin: 5px 0 0 0; font-size: 10pt; font-weight: bold; }
 
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10pt; }
-            th, td { border: 1px solid #000; padding: 8px 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10pt; font-family: Arial, sans-serif; }
+            th, td { border: 1px solid #000; padding: 7px 9px; }
             th { background-color: #f2f2f2; font-weight: bold; text-align: center; text-transform: uppercase; }
             
-            .footer { margin-top: 40px; float: right; text-align: center; font-size: 10pt; width: 250px; }
+            .footer { margin-top: 40px; float: right; text-align: center; font-size: 10pt; width: 250px; font-family: Arial, sans-serif; }
             
             @media print {
               @page { size: A4 portrait; margin: 15mm; }
@@ -276,13 +314,28 @@
           </style>
         </head>
         <body>
-          <div class="header-kop">
-            <h3>PEMERINTAH PROVINSI JAWA TIMUR</h3>
-            <h2>DINAS PENDIDIKAN</h2>
-            <h1>SMK NEGERI 1 PURWOASRI</h1>
-            <p>Jl. Jend. Sudirman No. 9 Purwoasri, Kab. Kediri | Telp/Fax: (0354) 529123</p>
-          </div>
 
+          <!-- HEADER KOP SURAT -->
+          <div class="kop-container">
+            <img src="${logoUrl}" class="kop-logo" alt="Logo Pemprov Jatim" onerror="this.style.visibility='hidden'">
+            <div class="kop-text">
+              <div class="h-pemprov">PEMERINTAH PROVINSI JAWA TIMUR</div>
+              <div class="h-dinas">DINAS PENDIDIKAN</div>
+              <div class="h-sekolah">SEKOLAH MENENGAH KEJURUAN NEGERI 1</div>
+              <div class="h-purwoasri">PURWOASRI</div>
+              <div class="h-alamat">Jl. RAYA MRANGGEN - ☎ (0354) 3881038 PURWOASRI</div>
+              <div class="h-email">e-mail : smknpurwoasri@yahoo.com.co.id</div>
+            </div>
+          </div>
+          
+          <div class="kop-subfooter">
+            <div class="h-kediri">KEDIRI</div>
+            <div class="h-kodepos">Kode Pos : 64154</div>
+          </div>
+          
+          <div class="garis-kop"></div>
+
+          <!-- ISI LAPORAN -->
           <div class="title-laporan">
             <h4>LAPORAN PRESENSI GURU - ${kegiatan.toUpperCase()}</h4>
             <p>PERIODE: ${bulanTeks.toUpperCase()} ${tahun}</p>
