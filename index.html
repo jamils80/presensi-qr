@@ -16,9 +16,27 @@
   <div class="container">
     <div class="card p-4 text-center">
       <h3 class="mb-3">System Presensi QR Code</h3>
-      <p class="text-muted">Arahkan QR Code Siswa ke Kamera</p>
       
-      <div class="mb-3">
+      <!-- Pilihan Kategori Presensi -->
+      <div class="mb-3 text-start">
+        <label class="form-label fw-bold">Tipe Presensi:</label>
+        <select id="tipePresensi" class="form-select" onchange="toggleFormGuru()">
+          <option value="siswa">Presensi Siswa</option>
+          <option value="guru">Presensi Guru</option>
+        </select>
+      </div>
+
+      <!-- Pilihan Kegiatan Guru (Dinamis) -->
+      <div class="mb-3 text-start" id="boxKegiatanGuru" style="display: none;">
+        <label class="form-label fw-bold">Pilih Kegiatan Guru:</label>
+        <select id="kegiatanGuru" class="form-select">
+          <option value="Upacara">Upacara</option>
+          <option value="Rapat Dinas">Rapat Dinas</option>
+        </select>
+      </div>
+
+      <div class="mb-3 text-start">
+        <label class="form-label fw-bold">Pilih Kamera:</label>
         <select id="cameraSelect" class="form-select" onchange="switchCamera(this.value)">
           <option value="">Memuat Kamera...</option>
         </select>
@@ -35,6 +53,12 @@
     let html5QrCode;
     let isProcessing = false;
 
+    function toggleFormGuru() {
+      const tipe = document.getElementById('tipePresensi').value;
+      const boxKegiatan = document.getElementById('boxKegiatanGuru');
+      boxKegiatan.style.display = (tipe === 'guru') ? 'block' : 'none';
+    }
+
     function onScanSuccess(decodedText) {
       if (isProcessing) return;
       isProcessing = true;
@@ -42,14 +66,22 @@
       const resultDiv = document.getElementById('result');
       resultDiv.className = 'mt-4 alert alert-info';
       resultDiv.classList.remove('d-none');
-      resultDiv.innerText = 'Memproses NIS: ' + decodedText + '...';
+      resultDiv.innerText = 'Memproses data QR: ' + decodedText + '...';
 
       const cleanUrl = WEB_APP_URL.replace(/\/u\/\d+\//, '/');
-      
-      // Mengunci target kembali ke alamat GitHub Pages
       const targetGithubUrl = "https://jamils80.github.io/presensi-qr/";
+      
+      const tipe = document.getElementById('tipePresensi').value;
+      let finalRedirectUrl = "";
 
-      window.location.href = cleanUrl + '?nis=' + encodeURIComponent(decodedText) + '&redirect_url=' + encodeURIComponent(targetGithubUrl);
+      if (tipe === 'guru') {
+        const kegiatan = document.getElementById('kegiatanGuru').value;
+        finalRedirectUrl = cleanUrl + '?nip=' + encodeURIComponent(decodedText) + '&tipe=guru&kegiatan=' + encodeURIComponent(kegiatan) + '&redirect_url=' + encodeURIComponent(targetGithubUrl);
+      } else {
+        finalRedirectUrl = cleanUrl + '?nis=' + encodeURIComponent(decodedText) + '&tipe=siswa&redirect_url=' + encodeURIComponent(targetGithubUrl);
+      }
+
+      window.location.href = finalRedirectUrl;
     }
 
     function initCamera() {
