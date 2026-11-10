@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>System Presensi QR Code</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     body { background-color: #f4f6f9; padding-top: 20px; }
@@ -15,7 +16,7 @@
 <body>
   <div class="container">
     <div class="card p-4 text-center">
-      <h3 class="mb-3">System Presensi QR Code</h3>
+      <h3 class="mb-3 fw-bold text-primary">System Presensi QR Code</h3>
       
       <!-- Pilihan Kategori Presensi -->
       <div class="mb-3 text-start">
@@ -44,14 +45,74 @@
 
       <div id="reader"></div>
       <div id="result" class="mt-4 alert d-none" role="alert"></div>
+
+      <!-- Tombol Cetak Laporan Presensi Guru -->
+      <hr class="my-4">
+      <button class="btn btn-outline-primary w-100 fw-bold py-2" onclick="openModalLaporanGuru()">
+        <i class="fa-solid fa-print me-2"></i> Cetak Laporan Presensi Guru
+      </button>
     </div>
   </div>
 
+  <!-- MODAL FILTER LAPORAN GURU -->
+  <div class="modal fade" id="modalLaporanGuru" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-file-invoice me-2"></i> Laporan Presensi Guru</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 text-start">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Pilih Jenis Kegiatan</label>
+            <select id="filterKegiatanGuru" class="form-select">
+              <option value="Upacara">Upacara</option>
+              <option value="Rapat Dinas">Rapat Dinas</option>
+            </select>
+          </div>
+          <div class="row g-3 mb-4">
+            <div class="col-6">
+              <label class="form-label small fw-bold">Pilih Bulan</label>
+              <select id="filterBulanGuru" class="form-select">
+                <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+                <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+                <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+                <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">Pilih Tahun</label>
+              <select id="filterTahunGuru" class="form-select"></select>
+            </div>
+          </div>
+          <button onclick="prosesCetakLaporanGuru()" class="btn btn-success w-100 rounded-3 fw-bold py-2">
+            <i class="fa-solid fa-print me-2"></i> Tampilkan & Cetak PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHhTfb4ENIEkA_QJEiT8dhYLeysGrXxZw7yH--oE1-PZ0vnmMm1vVpT1jcd3toRbwN/exec";
 
     let html5QrCode;
     let isProcessing = false;
+    let modalLaporanGuruElement = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+      modalLaporanGuruElement = new bootstrap.Modal(document.getElementById('modalLaporanGuru'));
+
+      const now = new Date();
+      document.getElementById('filterBulanGuru').value = now.getMonth() + 1;
+
+      const selectTahun = document.getElementById('filterTahunGuru');
+      const currentYear = now.getFullYear();
+      for (let y = currentYear - 2; y <= currentYear + 1; y++) {
+        selectTahun.innerHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`;
+      }
+    });
 
     function toggleFormGuru() {
       const tipe = document.getElementById('tipePresensi').value;
@@ -92,14 +153,12 @@
         select.innerHTML = '';
 
         if (cameras && cameras.length > 0) {
-          // Cari kamera belakang berdasarkan label (back/rear/environment)
           let backCamera = cameras.find(cam => 
             cam.label.toLowerCase().includes('back') || 
             cam.label.toLowerCase().includes('rear') ||
             cam.label.toLowerCase().includes('environment')
           );
 
-          // Jika tidak ada label khusus 'back', ambil kamera paling terakhir di daftar (biasanya kamera utama belakang di Android)
           const defaultCamId = backCamera ? backCamera.id : cameras[cameras.length - 1].id;
 
           cameras.forEach((cam, index) => {
@@ -112,28 +171,23 @@
           select.value = defaultCamId;
           startCamera(defaultCamId);
         } else {
-          // Fallback mengunci kamera belakang secara eksplisit via environment
           startCamera({ facingMode: { exact: "environment" } });
         }
       }).catch(err => {
-        // Fallback jika API getCameras ditolak
         startCamera({ facingMode: "environment" });
       });
     }
 
     function startCamera(cameraConfig) {
       const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-      
       if (html5QrCode && html5QrCode.isScanning) {
         html5QrCode.stop().then(() => { 
           html5QrCode.start(cameraConfig, config, onScanSuccess).catch(() => {
-            // Fallback jika exact environment gagal
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
           });
         });
       } else {
         html5QrCode.start(cameraConfig, config, onScanSuccess).catch(() => {
-          // Fallback jika exact environment gagal
           html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
         });
       }
@@ -141,6 +195,131 @@
 
     function switchCamera(cameraId) {
       if (cameraId) startCamera(cameraId);
+    }
+
+    // --- LOGIKA CETAK LAPORAN GURU ---
+    function openModalLaporanGuru() {
+      modalLaporanGuruElement.show();
+    }
+
+    function prosesCetakLaporanGuru() {
+      const kegiatan = document.getElementById('filterKegiatanGuru').value;
+      const bulan = document.getElementById('filterBulanGuru').value;
+      const bulanTeks = document.getElementById('filterBulanGuru').options[document.getElementById('filterBulanGuru').selectedIndex].text;
+      const tahun = document.getElementById('filterTahunGuru').value;
+
+      fetch(`${WEB_APP_URL}?action=getLaporanGuru&kegiatan=${encodeURIComponent(kegiatan)}&bulan=${bulan}&tahun=${tahun}`)
+        .then(res => res.json())
+        .then(data => {
+          modalLaporanGuruElement.hide();
+          generatePrintViewGuru(data, kegiatan, bulanTeks, tahun);
+        })
+        .catch(err => {
+          alert("Gagal memuat data laporan dari server!");
+        });
+    }
+
+    function generatePrintViewGuru(data, kegiatan, bulanTeks, tahun) {
+      if (!data || data.length === 0) {
+        alert(`Tidak ada data presensi ${kegiatan} pada periode ${bulanTeks} ${tahun}`);
+        return;
+      }
+
+      let tableRows = '';
+      let no = 1;
+
+      data.forEach(item => {
+        tableRows += `
+          <tr>
+            <td style="text-align:center;">${no++}</td>
+            <td style="text-align:center;">${item.tanggal || '-'}</td>
+            <td style="text-align:center;">${item.nip || '-'}</td>
+            <td>${item.nama || '-'}</td>
+            <td style="text-align:center;">${item.kegiatan || '-'}</td>
+            <td style="text-align:center; font-weight:bold; color:#16a34a;">${item.status || 'Hadir'}</td>
+          </tr>
+        `;
+      });
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Laporan Presensi Guru - ${kegiatan} (${bulanTeks} ${tahun})</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 25px; color: #000; }
+            .header-kop {
+              text-align: center;
+              border-bottom: 3px double #000;
+              padding-bottom: 10px;
+              margin-bottom: 20px;
+            }
+            .header-kop h3 { margin: 0; font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+            .header-kop h2 { margin: 2px 0; font-size: 16pt; font-weight: bold; text-transform: uppercase; }
+            .header-kop h1 { margin: 2px 0; font-size: 18pt; font-weight: bold; text-transform: uppercase; }
+            .header-kop p { margin: 4px 0 0 0; font-size: 9pt; font-style: italic; }
+            
+            .title-laporan { text-align: center; margin-bottom: 20px; }
+            .title-laporan h4 { margin: 0; text-transform: uppercase; font-size: 13pt; text-decoration: underline; }
+            .title-laporan p { margin: 5px 0 0 0; font-size: 10pt; font-weight: bold; }
+
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10pt; }
+            th, td { border: 1px solid #000; padding: 8px 10px; }
+            th { background-color: #f2f2f2; font-weight: bold; text-align: center; text-transform: uppercase; }
+            
+            .footer { margin-top: 40px; float: right; text-align: center; font-size: 10pt; width: 250px; }
+            
+            @media print {
+              @page { size: A4 portrait; margin: 15mm; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header-kop">
+            <h3>PEMERINTAH PROVINSI JAWA TIMUR</h3>
+            <h2>DINAS PENDIDIKAN</h2>
+            <h1>SMK NEGERI 1 PURWOASRI</h1>
+            <p>Jl. Jend. Sudirman No. 9 Purwoasri, Kab. Kediri | Telp/Fax: (0354) 529123</p>
+          </div>
+
+          <div class="title-laporan">
+            <h4>LAPORAN PRESENSI GURU - ${kegiatan.toUpperCase()}</h4>
+            <p>PERIODE: ${bulanTeks.toUpperCase()} ${tahun}</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th width="5%">No</th>
+                <th width="20%">Tanggal & Waktu</th>
+                <th width="22%">NIP / Kode Guru</th>
+                <th width="33%">Nama Guru</th>
+                <th width="12%">Kegiatan</th>
+                <th width="8%">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>Purwoasri, ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+            <p>Kepala SMK Negeri 1 Purwoasri,</p>
+            <br><br><br><br>
+            <p><b><u>________________________</u></b><br>NIP. -</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
 
     window.onload = function() {
