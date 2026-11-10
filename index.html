@@ -92,28 +92,50 @@
         select.innerHTML = '';
 
         if (cameras && cameras.length > 0) {
+          // Cari kamera belakang berdasarkan label (back/rear/environment)
+          let backCamera = cameras.find(cam => 
+            cam.label.toLowerCase().includes('back') || 
+            cam.label.toLowerCase().includes('rear') ||
+            cam.label.toLowerCase().includes('environment')
+          );
+
+          // Jika tidak ada label khusus 'back', ambil kamera paling terakhir di daftar (biasanya kamera utama belakang di Android)
+          const defaultCamId = backCamera ? backCamera.id : cameras[cameras.length - 1].id;
+
           cameras.forEach((cam, index) => {
             const opt = document.createElement('option');
             opt.value = cam.id;
             opt.text = cam.label || `Kamera ${index + 1}`;
             select.appendChild(opt);
           });
-          select.value = cameras[0].id;
-          startCamera(cameras[0].id);
+
+          select.value = defaultCamId;
+          startCamera(defaultCamId);
         } else {
-          startCamera({ facingMode: "environment" });
+          // Fallback mengunci kamera belakang secara eksplisit via environment
+          startCamera({ facingMode: { exact: "environment" } });
         }
       }).catch(err => {
+        // Fallback jika API getCameras ditolak
         startCamera({ facingMode: "environment" });
       });
     }
 
-    function startCamera(cameraId) {
+    function startCamera(cameraConfig) {
       const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      
       if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => { html5QrCode.start(cameraId, config, onScanSuccess); });
+        html5QrCode.stop().then(() => { 
+          html5QrCode.start(cameraConfig, config, onScanSuccess).catch(() => {
+            // Fallback jika exact environment gagal
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+          });
+        });
       } else {
-        html5QrCode.start(cameraId, config, onScanSuccess);
+        html5QrCode.start(cameraConfig, config, onScanSuccess).catch(() => {
+          // Fallback jika exact environment gagal
+          html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess);
+        });
       }
     }
 
