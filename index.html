@@ -197,7 +197,7 @@
       if (cameraId) startCamera(cameraId);
     }
 
-    // --- LOGIKA CETAK LAPORAN GURU ---
+    // --- LOGIKA CETAK LAPORAN GURU REVISI ---
     function openModalLaporanGuru() {
       modalLaporanGuruElement.show();
     }
@@ -210,22 +210,26 @@
 
       fetch(`${WEB_APP_URL}?action=getLaporanGuru&kegiatan=${encodeURIComponent(kegiatan)}&bulan=${bulan}&tahun=${tahun}`)
         .then(res => res.json())
-        .then(data => {
+        .then(resData => {
           modalLaporanGuruElement.hide();
-          generatePrintViewGuru(data, kegiatan, bulanTeks, tahun);
+          
+          // PENYESUAIAN PENTING: Penanganan struktur array vs objek ber-kepsek
+          let dataList = Array.isArray(resData) ? resData : (resData.list || []);
+          let kepsekInfo = (resData && resData.kepsek) ? resData.kepsek : { nama: "________________________", nip: "-" };
+          
+          generatePrintViewGuru(dataList, kepsekInfo, kegiatan, bulanTeks, tahun);
         })
         .catch(err => {
-          alert("Gagal memuat data laporan dari server!");
+          alert("Gagal memuat data laporan dari server! Pastikan deployment Apps Script sudah versi terbaru.");
         });
     }
 
-    function generatePrintViewGuru(data, kegiatan, bulanTeks, tahun) {
+    function generatePrintViewGuru(data, kepsek, kegiatan, bulanTeks, tahun) {
       if (!data || data.length === 0) {
         alert(`Tidak ada data presensi ${kegiatan} pada periode ${bulanTeks} ${tahun}`);
         return;
       }
 
-      // Link Direct Gambar Logo Pemprov Jawa Timur dari Google Drive Anda
       const logoUrl = "https://lh3.googleusercontent.com/d/1fidEkrCy5VvkmlMfreTWFkpCnIhEN2le";
 
       let tableRows = '';
@@ -244,6 +248,9 @@
         `;
       });
 
+      const namaKepsek = (kepsek && kepsek.nama) ? kepsek.nama : "________________________";
+      const nipKepsek  = (kepsek && kepsek.nip) ? kepsek.nip : "-";
+
       const printWindow = window.open('', '_blank');
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -253,7 +260,6 @@
           <style>
             body { font-family: 'Times New Roman', Times, serif; padding: 20px; color: #000; }
             
-            /* SCRIPT KOP SURAT SESUAI GAMBAR */
             .kop-container {
               display: flex;
               align-items: center;
@@ -269,7 +275,7 @@
             .kop-text {
               flex-grow: 1;
               text-align: center;
-              margin-right: 85px; /* Menyeimbangkan posisi teks dengan lebar logo */
+              margin-right: 85px;
             }
             .kop-text .h-pemprov { font-size: 13pt; font-weight: normal; margin: 0; letter-spacing: 0.5px; }
             .kop-text .h-dinas { font-size: 13pt; font-weight: normal; margin: 0; letter-spacing: 0.5px; }
@@ -277,7 +283,6 @@
             .kop-text .h-purwoasri { font-size: 15pt; font-weight: bold; margin: 0; text-transform: uppercase; }
             .kop-text .h-alamat { font-size: 10.5pt; margin: 3px 0 0 0; }
             .kop-text .h-email { font-size: 10.5pt; margin: 1px 0 0 0; }
-            .kop-text .h-email a { color: #000; text-decoration: underline; }
             
             .kop-subfooter {
               display: flex;
@@ -289,7 +294,6 @@
             .h-kediri { font-size: 13pt; font-weight: bold; text-align: center; flex-grow: 1; margin-left: 90px; }
             .h-kodepos { font-size: 10pt; font-weight: normal; }
 
-            /* GARIS GANDA KOP SURAT */
             .garis-kop {
               border: 0;
               border-top: 3px solid #000;
@@ -306,7 +310,7 @@
             th, td { border: 1px solid #000; padding: 7px 9px; }
             th { background-color: #f2f2f2; font-weight: bold; text-align: center; text-transform: uppercase; }
             
-            .footer { margin-top: 40px; float: right; text-align: center; font-size: 10pt; width: 250px; font-family: Arial, sans-serif; }
+            .footer { margin-top: 40px; float: right; text-align: center; font-size: 10pt; width: 300px; font-family: Arial, sans-serif; }
             
             @media print {
               @page { size: A4 portrait; margin: 15mm; }
@@ -315,7 +319,6 @@
         </head>
         <body>
 
-          <!-- HEADER KOP SURAT -->
           <div class="kop-container">
             <img src="${logoUrl}" class="kop-logo" alt="Logo Pemprov Jatim" onerror="this.style.visibility='hidden'">
             <div class="kop-text">
@@ -335,7 +338,6 @@
           
           <div class="garis-kop"></div>
 
-          <!-- ISI LAPORAN -->
           <div class="title-laporan">
             <h4>LAPORAN PRESENSI GURU - ${kegiatan.toUpperCase()}</h4>
             <p>PERIODE: ${bulanTeks.toUpperCase()} ${tahun}</p>
@@ -361,7 +363,7 @@
             <p>Purwoasri, ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
             <p>Kepala SMK Negeri 1 Purwoasri,</p>
             <br><br><br><br>
-            <p><b><u>________________________</u></b><br>NIP. -</p>
+            <p><b><u>${namaKepsek}</u></b><br>NIP. ${nipKepsek}</p>
           </div>
 
           <script>
