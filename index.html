@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
-    body { background-color: #f4f6f9; padding-top: 20px; }
+    body { background-color: #f4f6f9; padding-top: 20px; padding-bottom: 30px; }
     #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 8px; overflow: hidden; background: #000; min-height: 280px; }
     .card { max-width: 500px; margin: 0 auto; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
   </style>
@@ -46,9 +46,12 @@
       <div id="reader"></div>
       <div id="result" class="mt-4 alert d-none" role="alert"></div>
 
-      <!-- Tombol Cetak Laporan Presensi Guru -->
+      <!-- Menu Laporan & Monitoring -->
       <hr class="my-4">
-      <button class="btn btn-outline-primary w-100 fw-bold py-2" onclick="openModalLaporanGuru()">
+      <button type="button" class="btn btn-info text-white w-100 fw-bold py-2 mb-2 shadow-sm" onclick="bukaModalMonitoringSiswa()">
+        <i class="fa-solid fa-chart-column me-2"></i> Monitoring & Cetak Presensi Siswa
+      </button>
+      <button type="button" class="btn btn-outline-primary w-100 fw-bold py-2" onclick="openModalLaporanGuru()">
         <i class="fa-solid fa-print me-2"></i> Cetak Laporan Presensi Guru
       </button>
     </div>
@@ -93,6 +96,101 @@
     </div>
   </div>
 
+  <!-- MODAL MONITORING & CETAK PRESENSI SISWA PER KELAS -->
+  <div class="modal fade" id="modalMonitoringSiswa" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content" style="border-radius: 20px;">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold"><i class="fa-solid fa-users-viewfinder me-2"></i> Monitoring & Laporan Presensi Siswa</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 text-start">
+          
+          <!-- PANEL FILTER -->
+          <div class="row g-2 mb-3 bg-light p-3 rounded-3 border">
+            <div class="col-md-4">
+              <label class="form-label small fw-bold mb-1">Pilih Kelas</label>
+              <select id="monKelas" class="form-select form-select-sm fw-bold"></select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small fw-bold mb-1">Mode Laporan</label>
+              <select id="monMode" class="form-select form-select-sm" onchange="toggleFilterMode()">
+                <option value="harian">Harian (Per Tanggal)</option>
+                <option value="bulanan">Rekap Bulanan</option>
+              </select>
+            </div>
+            <div class="col-md-3" id="boxFilterTanggal">
+              <label class="form-label small fw-bold mb-1">Tanggal</label>
+              <input type="date" id="monTanggal" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-3 d-none" id="boxFilterBulan">
+              <label class="form-label small fw-bold mb-1">Bulan & Tahun</label>
+              <div class="d-flex gap-1">
+                <select id="monBulan" class="form-select form-select-sm">
+                  <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+                  <option value="4">Apr</option><option value="5">Mei</option><option value="6">Jun</option>
+                  <option value="7">Jul</option><option value="8">Agu</option><option value="9">Sep</option>
+                  <option value="10">Okt</option><option value="11">Nov</option><option value="12">Des</option>
+                </select>
+                <input type="number" id="monTahun" class="form-control form-control-sm" style="width:75px;">
+              </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-primary btn-sm w-100 fw-bold" onclick="muatDataMonitoring()">Tampilkan</button>
+            </div>
+          </div>
+
+          <!-- RINGKASAN STATISTIK -->
+          <div id="statBox" class="row text-center g-2 mb-3 d-none">
+            <div class="col-4">
+              <div class="p-2 border rounded bg-white">
+                <small class="text-muted d-block">Total Siswa</small>
+                <strong class="fs-5 text-dark" id="statTotal">0</strong>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 border rounded bg-success bg-opacity-10">
+                <small class="text-success d-block">Hadir</small>
+                <strong class="fs-5 text-success" id="statHadir">0</strong>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 border rounded bg-danger bg-opacity-10">
+                <small class="text-danger d-block" id="labelStatBelum">Belum Scan</small>
+                <strong class="fs-5 text-danger" id="statBelum">0</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABEL PREVIEW MONITORING -->
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle" style="font-size: 0.85rem;">
+              <thead class="table-dark text-center" id="theadMonitoring">
+                <tr>
+                  <th width="8%">No</th>
+                  <th width="20%">NIS</th>
+                  <th>Nama Siswa</th>
+                  <th width="20%">Waktu Scan</th>
+                  <th width="18%">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyMonitoring">
+                <tr><td colspan="5" class="text-center text-muted py-4">Pilih kelas dan klik Tampilkan</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+          <button type="button" class="btn btn-success fw-bold" id="btnCetakSiswa" onclick="cetakLaporanSiswaPDF()" disabled>
+            <i class="fa-solid fa-print me-2"></i> Cetak Laporan PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHhTfb4ENIEkA_QJEiT8dhYLeysGrXxZw7yH--oE1-PZ0vnmMm1vVpT1jcd3toRbwN/exec";
@@ -100,9 +198,12 @@
     let html5QrCode;
     let isProcessing = false;
     let modalLaporanGuruElement = null;
+    let modalMonSiswa = null;
+    let dataMonitoringAktif = null;
 
     document.addEventListener("DOMContentLoaded", function () {
       modalLaporanGuruElement = new bootstrap.Modal(document.getElementById('modalLaporanGuru'));
+      modalMonSiswa = new bootstrap.Modal(document.getElementById('modalMonitoringSiswa'));
 
       const now = new Date();
       document.getElementById('filterBulanGuru').value = now.getMonth() + 1;
@@ -197,6 +298,254 @@
       if (cameraId) startCamera(cameraId);
     }
 
+    // --- LOGIKA MONITORING & CETAK PRESENSI SISWA ---
+    function bukaModalMonitoringSiswa() {
+      const now = new Date();
+      document.getElementById('monTanggal').valueAsDate = now;
+      document.getElementById('monBulan').value = now.getMonth() + 1;
+      document.getElementById('monTahun').value = now.getFullYear();
+
+      const selKelas = document.getElementById('monKelas');
+      if (selKelas.options.length === 0) {
+        selKelas.innerHTML = '<option>Memuat kelas...</option>';
+        const cleanUrl = WEB_APP_URL.replace(/\/u\/\d+\//, '/');
+        fetch(`${cleanUrl}?action=getDaftarKelas`)
+          .then(res => res.json())
+          .then(list => {
+            selKelas.innerHTML = '';
+            list.forEach(k => { selKelas.innerHTML += `<option value="${k}">${k}</option>`; });
+          })
+          .catch(() => {
+            selKelas.innerHTML = '<option value="">Gagal memuat kelas</option>';
+          });
+      }
+      modalMonSiswa.show();
+    }
+
+    function toggleFilterMode() {
+      const mode = document.getElementById('monMode').value;
+      if (mode === 'harian') {
+        document.getElementById('boxFilterTanggal').classList.remove('d-none');
+        document.getElementById('boxFilterBulan').classList.add('d-none');
+      } else {
+        document.getElementById('boxFilterTanggal').classList.add('d-none');
+        document.getElementById('boxFilterBulan').classList.remove('d-none');
+      }
+    }
+
+    function muatDataMonitoring() {
+      const kelas = document.getElementById('monKelas').value;
+      const mode = document.getElementById('monMode').value;
+      const tgl = document.getElementById('monTanggal').value;
+      const bln = document.getElementById('monBulan').value;
+      const thn = document.getElementById('monTahun').value;
+
+      if (!kelas) {
+        alert("Silakan pilih kelas terlebih dahulu!");
+        return;
+      }
+
+      const tbody = document.getElementById('tbodyMonitoring');
+      const thead = document.getElementById('theadMonitoring');
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3">Memuat data presensi...</td></tr>';
+
+      const cleanUrl = WEB_APP_URL.replace(/\/u\/\d+\//, '/');
+      let queryUrl = `${cleanUrl}?action=getLaporanSiswaKelas&kelas=${encodeURIComponent(kelas)}`;
+      if (mode === 'harian') {
+        queryUrl += `&tanggal=${encodeURIComponent(tgl)}`;
+      } else {
+        queryUrl += `&bulan=${encodeURIComponent(bln)}&tahun=${encodeURIComponent(thn)}`;
+      }
+
+      fetch(queryUrl)
+        .then(res => res.json())
+        .then(res => {
+          dataMonitoringAktif = {
+            kelas: kelas,
+            mode: mode,
+            tanggal: tgl,
+            bulan: bln,
+            bulanTeks: document.getElementById('monBulan').options[document.getElementById('monBulan').selectedIndex].text,
+            tahun: thn,
+            siswa: res.siswa || [],
+            kepsek: res.kepsek || { nama: "Drs. EDDY PRIYO UTOMO, M.Si.", nip: "19670807 200112 1 004" }
+          };
+
+          const list = dataMonitoringAktif.siswa;
+          document.getElementById('btnCetakSiswa').disabled = (list.length === 0);
+
+          if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada data siswa di kelas ini.</td></tr>';
+            document.getElementById('statBox').classList.add('d-none');
+            return;
+          }
+
+          document.getElementById('statBox').classList.remove('d-none');
+          document.getElementById('statTotal').innerText = list.length;
+
+          let html = '';
+          let jmlHadir = 0;
+
+          if (mode === 'harian') {
+            thead.innerHTML = `<tr><th width="8%">No</th><th width="20%">NIS</th><th>Nama Siswa</th><th width="20%">Jam Scan</th><th width="18%">Status</th></tr>`;
+            document.getElementById('labelStatBelum').innerText = "Belum Scan";
+
+            list.forEach((s, idx) => {
+              const isHadir = s.statusHariIni !== "Belum Scan";
+              if (isHadir) jmlHadir++;
+              const badge = isHadir 
+                ? `<span class="badge bg-success">${s.statusHariIni}</span>` 
+                : `<span class="badge bg-danger">Belum Scan</span>`;
+
+              html += `<tr>
+                <td class="text-center">${idx + 1}</td>
+                <td class="text-center">${s.nis}</td>
+                <td>${s.nama}</td>
+                <td class="text-center">${s.waktuHadir}</td>
+                <td class="text-center">${badge}</td>
+              </tr>`;
+            });
+            document.getElementById('statHadir').innerText = jmlHadir;
+            document.getElementById('statBelum').innerText = list.length - jmlHadir;
+
+          } else {
+            thead.innerHTML = `<tr><th width="8%">No</th><th width="22%">NIS</th><th>Nama Siswa</th><th width="22%">Total Kehadiran</th></tr>`;
+            document.getElementById('labelStatBelum').innerText = "Tidak Pernah Hadir";
+
+            let jmlKosong = 0;
+            list.forEach((s, idx) => {
+              if (s.totalHadir > 0) jmlHadir++;
+              else jmlKosong++;
+
+              html += `<tr>
+                <td class="text-center">${idx + 1}</td>
+                <td class="text-center">${s.nis}</td>
+                <td>${s.nama}</td>
+                <td class="text-center fw-bold text-primary">${s.totalHadir} Hari</td>
+              </tr>`;
+            });
+            document.getElementById('statHadir').innerText = jmlHadir + " Siswa";
+            document.getElementById('statBelum').innerText = jmlKosong + " Siswa";
+          }
+
+          tbody.innerHTML = html;
+        })
+        .catch(() => {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Gagal memuat data! Pastikan Apps Script sudah di-deploy versi terbaru.</td></tr>';
+        });
+    }
+
+    function cetakLaporanSiswaPDF() {
+      if (!dataMonitoringAktif || dataMonitoringAktif.siswa.length === 0) return;
+
+      const d = dataMonitoringAktif;
+      const logoUrl = "https://lh3.googleusercontent.com/d/1fidEkrCy5VvkmlMfreTWFkpCnIhEN2le";
+      
+      let subJudulPeriode = "";
+      let thKolom = "";
+      let rowsHtml = "";
+
+      if (d.mode === 'harian') {
+        const parts = d.tanggal.split('-');
+        const tglIndo = new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        subJudulPeriode = `HARI / TANGGAL: ${tglIndo.toUpperCase()}`;
+        thKolom = `<th width="6%">No</th><th width="18%">NIS</th><th width="42%">Nama Siswa</th><th width="17%">Waktu Scan</th><th width="17%">Keterangan</th>`;
+        
+        d.siswa.forEach((s, i) => {
+          const stColor = s.statusHariIni !== "Belum Scan" ? "#16a34a" : "#dc2626";
+          rowsHtml += `<tr>
+            <td style="text-align:center;">${i + 1}</td>
+            <td style="text-align:center;">${s.nis}</td>
+            <td>${s.nama}</td>
+            <td style="text-align:center;">${s.waktuHadir}</td>
+            <td style="text-align:center; font-weight:bold; color:${stColor};">${s.statusHariIni}</td>
+          </tr>`;
+        });
+      } else {
+        subJudulPeriode = `REKAP BULAN: ${d.bulanTeks.toUpperCase()} ${d.tahun}`;
+        thKolom = `<th width="8%">No</th><th width="22%">NIS</th><th width="48%">Nama Siswa</th><th width="22%">Total Kehadiran</th>`;
+        
+        d.siswa.forEach((s, i) => {
+          rowsHtml += `<tr>
+            <td style="text-align:center;">${i + 1}</td>
+            <td style="text-align:center;">${s.nis}</td>
+            <td>${s.nama}</td>
+            <td style="text-align:center; font-weight:bold;">${s.totalHadir} Hari</td>
+          </tr>`;
+        });
+      }
+
+      const printWin = window.open('', '_blank');
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Laporan Presensi Siswa - ${d.kelas}</title>
+          <style>
+            body { font-family: 'Times New Roman', Times, serif; padding: 15px 25px; color: #000; }
+            .kop-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+            .kop-logo { width: 80px; height: auto; }
+            .kop-text { flex-grow: 1; text-align: center; margin-right: 80px; }
+            .kop-text div { margin: 0; }
+            .h-pemprov, .h-dinas { font-size: 13pt; }
+            .h-sekolah, .h-purwoasri { font-size: 15pt; font-weight: bold; }
+            .h-alamat, .h-email { font-size: 10pt; }
+            .kop-subfooter { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 2px; padding: 0 10px; }
+            .h-kediri { font-size: 13pt; font-weight: bold; text-align: center; flex-grow: 1; margin-left: 80px; }
+            .h-kodepos { font-size: 10pt; }
+            .garis-kop { border: 0; border-top: 3px solid #000; border-bottom: 1px solid #000; height: 3px; margin: 4px 0 15px 0; }
+            .title-laporan { text-align: center; margin-bottom: 15px; font-family: Arial, sans-serif; }
+            .title-laporan h4 { margin: 0; font-size: 12pt; text-decoration: underline; }
+            .title-laporan p { margin: 4px 0 0 0; font-size: 10pt; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; font-size: 9.5pt; font-family: Arial, sans-serif; }
+            th, td { border: 1px solid #000; padding: 5px 8px; }
+            th { background-color: #f2f2f2; text-align: center; text-transform: uppercase; }
+            .footer { margin-top: 20px; float: right; text-align: center; font-size: 10pt; width: 280px; font-family: Arial, sans-serif; page-break-inside: avoid; }
+            @media print { @page { size: A4 portrait; margin: 12mm; } }
+          </style>
+        </head>
+        <body>
+          <div class="kop-container">
+            <img src="${logoUrl}" class="kop-logo" onerror="this.style.visibility='hidden'">
+            <div class="kop-text">
+              <div class="h-pemprov">PEMERINTAH PROVINSI JAWA TIMUR</div>
+              <div class="h-dinas">DINAS PENDIDIKAN</div>
+              <div class="h-sekolah">SEKOLAH MENENGAH KEJURUAN NEGERI 1</div>
+              <div class="h-purwoasri">PURWOASRI</div>
+              <div class="h-alamat">Jl. RAYA MRANGGEN - ☎ (0354) 3881038 PURWOASRI</div>
+              <div class="h-email">e-mail : smknpurwoasri@yahoo.com.co.id</div>
+            </div>
+          </div>
+          <div class="kop-subfooter">
+            <div class="h-kediri">KEDIRI</div>
+            <div class="h-kodepos">Kode Pos : 64154</div>
+          </div>
+          <div class="garis-kop"></div>
+
+          <div class="title-laporan">
+            <h4>LAPORAN PRESENSI SISWA - KELAS ${d.kelas.toUpperCase()}</h4>
+            <p>${subJudulPeriode}</p>
+          </div>
+
+          <table>
+            <thead><tr>${thKolom}</tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+
+          <div class="footer">
+            <p style="margin-bottom: 2px;">Purwoasri, ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+            <p style="margin-top: 0;">Kepala SMK Negeri 1 Purwoasri,</p>
+            <br><br>
+            <p style="margin: 0;"><b><u>${d.kepsek.nama}</u></b></p>
+            <p style="margin: 2px 0 0 0;">NIP. ${d.kepsek.nip}</p>
+          </div>
+          <script>window.onload = function() { window.print(); }<\/script>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+    }
+
     // --- LOGIKA CETAK LAPORAN GURU REVISI ---
     function openModalLaporanGuru() {
       modalLaporanGuruElement.show();
@@ -208,12 +557,12 @@
       const bulanTeks = document.getElementById('filterBulanGuru').options[document.getElementById('filterBulanGuru').selectedIndex].text;
       const tahun = document.getElementById('filterTahunGuru').value;
 
-      fetch(`${WEB_APP_URL}?action=getLaporanGuru&kegiatan=${encodeURIComponent(kegiatan)}&bulan=${bulan}&tahun=${tahun}`)
+      const cleanUrl = WEB_APP_URL.replace(/\/u\/\d+\//, '/');
+      fetch(`${cleanUrl}?action=getLaporanGuru&kegiatan=${encodeURIComponent(kegiatan)}&bulan=${bulan}&tahun=${tahun}`)
         .then(res => res.json())
         .then(resData => {
           modalLaporanGuruElement.hide();
           
-          // PENYESUAIAN PENTING: Penanganan struktur array vs objek ber-kepsek
           let dataList = Array.isArray(resData) ? resData : (resData.list || []);
           let kepsekInfo = (resData && resData.kepsek) ? resData.kepsek : { nama: "________________________", nip: "-" };
           
@@ -259,66 +608,30 @@
           <title>Laporan Presensi Guru - ${kegiatan} (${bulanTeks} ${tahun})</title>
           <style>
             body { font-family: 'Times New Roman', Times, serif; padding: 20px; color: #000; }
-            
-            .kop-container {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              position: relative;
-              margin-bottom: 2px;
-            }
-            .kop-logo {
-              width: 85px;
-              height: auto;
-              margin-right: 15px;
-            }
-            .kop-text {
-              flex-grow: 1;
-              text-align: center;
-              margin-right: 85px;
-            }
+            .kop-container { display: flex; align-items: center; justify-content: space-between; position: relative; margin-bottom: 2px; }
+            .kop-logo { width: 85px; height: auto; margin-right: 15px; }
+            .kop-text { flex-grow: 1; text-align: center; margin-right: 85px; }
             .kop-text .h-pemprov { font-size: 13pt; font-weight: normal; margin: 0; letter-spacing: 0.5px; }
             .kop-text .h-dinas { font-size: 13pt; font-weight: normal; margin: 0; letter-spacing: 0.5px; }
             .kop-text .h-sekolah { font-size: 15pt; font-weight: bold; margin: 2px 0 0 0; text-transform: uppercase; }
             .kop-text .h-purwoasri { font-size: 15pt; font-weight: bold; margin: 0; text-transform: uppercase; }
             .kop-text .h-alamat { font-size: 10.5pt; margin: 3px 0 0 0; }
             .kop-text .h-email { font-size: 10.5pt; margin: 1px 0 0 0; }
-            
-            .kop-subfooter {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-end;
-              margin-top: 2px;
-              padding: 0 10px;
-            }
+            .kop-subfooter { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 2px; padding: 0 10px; }
             .h-kediri { font-size: 13pt; font-weight: bold; text-align: center; flex-grow: 1; margin-left: 90px; }
             .h-kodepos { font-size: 10pt; font-weight: normal; }
-
-            .garis-kop {
-              border: 0;
-              border-top: 3px solid #000;
-              border-bottom: 1px solid #000;
-              height: 3px;
-              margin: 4px 0 20px 0;
-            }
-
+            .garis-kop { border: 0; border-top: 3px solid #000; border-bottom: 1px solid #000; height: 3px; margin: 4px 0 20px 0; }
             .title-laporan { text-align: center; margin-bottom: 20px; font-family: Arial, sans-serif; }
             .title-laporan h4 { margin: 0; text-transform: uppercase; font-size: 12pt; text-decoration: underline; }
             .title-laporan p { margin: 5px 0 0 0; font-size: 10pt; font-weight: bold; }
-
             table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10pt; font-family: Arial, sans-serif; }
             th, td { border: 1px solid #000; padding: 7px 9px; }
             th { background-color: #f2f2f2; font-weight: bold; text-align: center; text-transform: uppercase; }
-            
-            .footer { margin-top: 40px; float: right; text-align: center; font-size: 10pt; width: 300px; font-family: Arial, sans-serif; }
-            
-            @media print {
-              @page { size: A4 portrait; margin: 15mm; }
-            }
+            .footer { margin-top: 20px; float: right; text-align: center; font-size: 10pt; width: 300px; font-family: Arial, sans-serif; }
+            @media print { @page { size: A4 portrait; margin: 15mm; } }
           </style>
         </head>
         <body>
-
           <div class="kop-container">
             <img src="${logoUrl}" class="kop-logo" alt="Logo Pemprov Jatim" onerror="this.style.visibility='hidden'">
             <div class="kop-text">
@@ -330,12 +643,10 @@
               <div class="h-email">e-mail : smknpurwoasri@yahoo.com.co.id</div>
             </div>
           </div>
-          
           <div class="kop-subfooter">
             <div class="h-kediri">KEDIRI</div>
             <div class="h-kodepos">Kode Pos : 64154</div>
           </div>
-          
           <div class="garis-kop"></div>
 
           <div class="title-laporan">
@@ -360,10 +671,11 @@
           </table>
 
           <div class="footer">
-            <p>Purwoasri, ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
-            <p>Kepala SMK Negeri 1 Purwoasri,</p>
+            <p style="margin-bottom: 2px;">Purwoasri, ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+            <p style="margin-top: 0;">Kepala SMK Negeri 1 Purwoasri,</p>
             <br><br>
-            <p><b><u>${namaKepsek}</u></b><br>NIP. ${nipKepsek}</p>
+            <p style="margin: 0;"><b><u>${namaKepsek}</u></b></p>
+            <p style="margin: 2px 0 0 0;">NIP. ${nipKepsek}</p>
           </div>
 
           <script>
