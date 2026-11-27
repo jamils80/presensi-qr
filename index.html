@@ -8,10 +8,38 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
-    body { background-color: #f4f6f9; padding-top: 20px; padding-bottom: 30px; }
-    #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 8px; overflow: hidden; background: #000; min-height: 280px; }
-    .card { max-width: 500px; margin: 0 auto; border: none; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-  </style>
+  body {
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    background-color: #0b132b !important;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -4%;
+    background: linear-gradient(135deg, rgba(11, 19, 43, 0.72), rgba(28, 37, 65, 0.65)),
+                url('https://lh3.googleusercontent.com/d/1Vo2a5qqGEPQm3XzyB0-qZr9NdBvNtXGX') center/cover no-repeat;
+    z-index: -2;
+    animation: bgDriftIndex 24s ease-in-out infinite alternate;
+  }
+  @keyframes bgDriftIndex {
+    0% { transform: scale(1) translate(0, 0); }
+    100% { transform: scale(1.07) translate(-1.5%, -1%); }
+  }
+  #fxCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .card, .container-box, .menu-card {
+    background-color: rgba(255, 255, 255, 0.94) !important;
+    backdrop-filter: blur(10px);
+  }
+</style>
 </head>
 <body>
   <div class="container">
