@@ -8,38 +8,54 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
-  body {
-    min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
-    background-color: #0b132b !important;
-  }
-  body::before {
-    content: "";
-    position: fixed;
-    inset: -4%;
-    background: linear-gradient(135deg, rgba(11, 19, 43, 0.72), rgba(28, 37, 65, 0.65)),
-                url('https://lh3.googleusercontent.com/d/1Vo2a5qqGEPQm3XzyB0-qZr9NdBvNtXGX') center/cover no-repeat;
-    z-index: -2;
-    animation: bgDriftIndex 24s ease-in-out infinite alternate;
-  }
-  @keyframes bgDriftIndex {
-    0% { transform: scale(1) translate(0, 0); }
-    100% { transform: scale(1.07) translate(-1.5%, -1%); }
-  }
-  #fxCanvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: -1;
-  }
-  .card, .container-box, .menu-card {
-    background-color: rgba(255, 255, 255, 0.94) !important;
-    backdrop-filter: blur(10px);
-  }
-</style>
+    body {
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      background-color: #0b132b !important;
+      padding: 25px 12px;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -4%;
+      background: linear-gradient(135deg, rgba(11, 19, 43, 0.72), rgba(28, 37, 65, 0.65)),
+                  url('https://lh3.googleusercontent.com/d/1Vo2a5qqGEPQm3XzyB0-qZr9NdBvNtXGX') center/cover no-repeat;
+      z-index: -2;
+      animation: bgDriftIndex 24s ease-in-out infinite alternate;
+    }
+    @keyframes bgDriftIndex {
+      0% { transform: scale(1) translate(0, 0); }
+      100% { transform: scale(1.07) translate(-1.5%, -1%); }
+    }
+    #fxCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .container {
+      max-width: 540px;
+    }
+    .card {
+      background-color: rgba(255, 255, 255, 0.95) !important;
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+      animation: cardReveal 0.7s ease-out both;
+    }
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #reader {
+      border-radius: 14px;
+      overflow: hidden;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -244,6 +260,9 @@
       </div>
     </div>
   </div>
+
+  <!-- KANVAS ANIMASI KUNANG-KUNANG -->
+  <canvas id="fxCanvas"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -743,56 +762,57 @@
       initCamera();
     };
   </script>
-  <canvas id="fxCanvas"></canvas>
-<script>
-(function() {
-  const canvas = document.getElementById('fxCanvas');
-  const ctx = canvas.getContext('2d');
-  let w, h, fireflies = [];
 
-  function resize() {
-    w = canvas.width = window.innerWidth;
-    h = canvas.height = window.innerHeight;
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  <!-- SCRIPT PARTIKEL KUNANG-KUNANG -->
+  <script>
+  (function() {
+    const canvas = document.getElementById('fxCanvas');
+    const ctx = canvas.getContext('2d');
+    let w, h, fireflies = [];
 
-  for (let i = 0; i < 45; i++) {
-    fireflies.push({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      r: Math.random() * 2.6 + 1.2,
-      vx: (Math.random() - 0.5) * 0.7,
-      vy: (Math.random() - 0.5) * 0.7,
-      alpha: Math.random(),
-      dAlpha: (Math.random() * 0.02) + 0.006
-    });
-  }
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
 
-  function animate() {
-    ctx.clearRect(0, 0, w, h);
-    fireflies.forEach(f => {
-      f.x += f.vx;
-      f.y += f.vy;
-      f.alpha += f.dAlpha;
-      if (f.alpha >= 1 || f.alpha <= 0.1) f.dAlpha *= -1;
-      if (f.x < 0) f.x = w; if (f.x > w) f.x = 0;
-      if (f.y < 0) f.y = h; if (f.y > h) f.y = 0;
+    for (let i = 0; i < 45; i++) {
+      fireflies.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 2.6 + 1.2,
+        vx: (Math.random() - 0.5) * 0.7,
+        vy: (Math.random() - 0.5) * 0.7,
+        alpha: Math.random(),
+        dAlpha: (Math.random() * 0.02) + 0.006
+      });
+    }
 
-      const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 4);
-      grad.addColorStop(0, `rgba(255, 235, 130, ${f.alpha})`);
-      grad.addColorStop(0.5, `rgba(255, 200, 60, ${f.alpha * 0.45})`);
-      grad.addColorStop(1, 'rgba(255, 200, 60, 0)');
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+      fireflies.forEach(f => {
+        f.x += f.vx;
+        f.y += f.vy;
+        f.alpha += f.dAlpha;
+        if (f.alpha >= 1 || f.alpha <= 0.1) f.dAlpha *= -1;
+        if (f.x < 0) f.x = w; if (f.x > w) f.x = 0;
+        if (f.y < 0) f.y = h; if (f.y > h) f.y = 0;
 
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, f.r * 4, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-    });
-    requestAnimationFrame(animate);
-  }
-  animate();
-})();
-</script>
+        const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 4);
+        grad.addColorStop(0, `rgba(255, 235, 130, ${f.alpha})`);
+        grad.addColorStop(0.5, `rgba(255, 200, 60, ${f.alpha * 0.45})`);
+        grad.addColorStop(1, 'rgba(255, 200, 60, 0)');
+
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r * 4, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  })();
+  </script>
 </body>
 </html>
