@@ -743,5 +743,56 @@
       initCamera();
     };
   </script>
+  <canvas id="fxCanvas"></canvas>
+<script>
+(function() {
+  const canvas = document.getElementById('fxCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, fireflies = [];
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  for (let i = 0; i < 45; i++) {
+    fireflies.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 2.6 + 1.2,
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: (Math.random() - 0.5) * 0.7,
+      alpha: Math.random(),
+      dAlpha: (Math.random() * 0.02) + 0.006
+    });
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, w, h);
+    fireflies.forEach(f => {
+      f.x += f.vx;
+      f.y += f.vy;
+      f.alpha += f.dAlpha;
+      if (f.alpha >= 1 || f.alpha <= 0.1) f.dAlpha *= -1;
+      if (f.x < 0) f.x = w; if (f.x > w) f.x = 0;
+      if (f.y < 0) f.y = h; if (f.y > h) f.y = 0;
+
+      const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 4);
+      grad.addColorStop(0, `rgba(255, 235, 130, ${f.alpha})`);
+      grad.addColorStop(0.5, `rgba(255, 200, 60, ${f.alpha * 0.45})`);
+      grad.addColorStop(1, 'rgba(255, 200, 60, 0)');
+
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r * 4, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    });
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+</script>
 </body>
 </html>
