@@ -540,8 +540,23 @@
       const qr = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(kode)}`;
       const w = window.open('', '_blank');
       w.document.write(`
-        <html><body style="font-family:Arial,sans-serif;text-align:center;padding:25px;">
-          <div style="border:2px solid #0d6efd;border-radius:14px;padding:18px;width:250px;display:inline-block;">
+        <!DOCTYPE html>
+        <html translate="no">
+        <head>
+          <meta name="google" content="notranslate">
+          <title>Cetak Kartu QR - ${nama}</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 25px; margin: 0; }
+            .kartu-qr-cetak { border: 2px solid #0d6efd; border-radius: 14px; padding: 18px; width: 250px; display: inline-block; background: #fff; }
+            @media print {
+              body * { visibility: hidden !important; }
+              .kartu-qr-cetak, .kartu-qr-cetak * { visibility: visible !important; }
+              .kartu-qr-cetak { position: fixed; left: 50%; top: 30px; transform: translateX(-50%); }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="kartu-qr-cetak">
             <div style="font-size:9pt;font-weight:bold;color:#0d6efd;">SMK NEGERI 1 PURWOASRI</div>
             <div style="font-size:8pt;color:#555;margin-bottom:10px;">${judulKartu}</div>
             <img src="${qr}" width="160" height="160">
@@ -549,12 +564,12 @@
             <div style="font-size:9pt;font-weight:bold;">${kode}</div>
             <div style="font-size:8.5pt;color:#666;margin-top:2px;">${subInfo}</div>
           </div>
-          <script>window.onload=function(){window.print();}<\/script>
-        </body></html>
+          <script>window.onload=function(){ setTimeout(function(){ window.print(); }, 300); }<\/script>
+        </body>
+        </html>
       `);
       w.document.close();
     }
-
     // --- HELPER FETCH POST & DELETE ---
     function kirimPost(payload, btnId, modalObj) {
       const btn = document.getElementById(btnId);
