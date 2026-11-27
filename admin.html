@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin Presensi - SMKN 1 Purwoasri</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #f0f4f8; font-family: 'Poppins', sans-serif; min-height: 100vh; }
+    .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0d6efd, #0a58ca); padding: 20px; }
+    .login-card { background: #fff; border-radius: 20px; padding: 35px; width: 100%; max-width: 420px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); }
+    .navbar-custom { background: linear-gradient(90deg, #0d6efd, #0a58ca); }
+    .card-dashboard { border: none; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .nav-pills .nav-link { font-weight: 600; border-radius: 12px; padding: 10px 20px; color: #0d6efd; }
+    .nav-pills .nav-link.active { background-color: #0d6efd; color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- HALAMAN LOGIN ADMIN -->
+  <div id="loginSection" class="login-wrapper">
+    <div class="login-card text-center">
+      <div class="d-flex justify-content-center gap-3 mb-3">
+        <img src="https://lh3.googleusercontent.com/d/1fidEkrCy5VvkmlMfreTWFkpCnIhEN2le" height="55" alt="Logo Jatim">
+      </div>
+      <h4 class="fw-bold text-primary mb-1">ADMIN PRESENSI QR</h4>
+      <p class="text-muted small mb-4">SMK Negeri 1 Purwoasri</p>
+
+      <div id="loginAlert" class="alert alert-danger d-none small py-2"></div>
+
+      <form id="formLogin">
+        <div class="mb-3 text-start">
+          <label class="form-label small fw-bold">Username</label>
+          <input type="text" id="loginUser" class="form-control" placeholder="Masukkan username" required>
+        </div>
+        <div class="mb-4 text-start">
+          <label class="form-label small fw-bold">Password</label>
+          <input type="password" id="loginPass" class="form-control" placeholder="Masukkan password" required>
+        </div>
+        <button type="submit" id="btnLogin" class="btn btn-primary w-100 fw-bold py-2 rounded-3">
+          <i class="fa-solid fa-right-to-bracket me-2"></i> MASUK PANEL ADMIN
+        </button>
+      </form>
+      <div class="mt-3">
+        <a href="index.html" class="text-decoration-none small text-secondary"><i class="fa-solid fa-arrow-left me-1"></i> Kembali ke Scanner Presensi</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HALAMAN DASHBOARD ADMIN -->
+  <div id="dashboardSection" class="d-none">
+    <nav class="navbar navbar-dark navbar-custom shadow-sm mb-4">
+      <div class="container">
+        <span class="navbar-brand fw-bold"><i class="fa-solid fa-qrcode me-2"></i> Admin Presensi Smeksapur</span>
+        <div class="d-flex align-items-center gap-3 text-white">
+          <span class="small d-none d-md-inline" id="infoAdminLogin">Halo, Admin</span>
+          <a href="index.html" class="btn btn-sm btn-outline-light">Scanner QR</a>
+          <button class="btn btn-sm btn-danger fw-bold" onclick="logoutAdmin()"><i class="fa-solid fa-power-off"></i> Keluar</button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container pb-5">
+      <!-- NAVIGASI TAB -->
+      <ul class="nav nav-pills mb-4 bg-white p-2 rounded-4 shadow-sm d-inline-flex flex-wrap gap-1" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabSiswa" type="button">
+            <i class="fa-solid fa-user-graduate me-2"></i> Data Siswa
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabGuru" type="button">
+            <i class="fa-solid fa-chalkboard-user me-2"></i> Data Guru
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabAdmin" type="button">
+            <i class="fa-solid fa-users-gear me-2"></i> User Admin
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        
+        <!-- TAB 1: MANAJEMEN DATA SISWA -->
+        <div class="tab-pane fade show active" id="tabSiswa">
+          <div class="card card-dashboard p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <div>
+                <h5 class="fw-bold mb-0 text-primary">Master Data Siswa</h5>
+                <small class="text-muted" id="totalSiswaBadge">Total: 0 siswa</small>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <select id="filterKelasSiswa" class="form-select form-select-sm" style="width: 150px;" onchange="filterTabelSiswa()">
+                  <option value="">Semua Kelas</option>
+                </select>
+                <input type="text" id="cariSiswa" class="form-control form-control-sm" style="width: 200px;" placeholder="Cari NIS / Nama..." onkeyup="filterTabelSiswa()">
+                <button class="btn btn-primary btn-sm fw-bold text-nowrap" onclick="bukaModalSiswa()">
+                  <i class="fa-solid fa-plus me-1"></i> Tambah Siswa
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive" style="max-height: 550px;">
+              <table class="table table-hover table-bordered align-middle" style="font-size: 0.9rem;">
+                <thead class="table-light text-center sticky-top">
+                  <tr>
+                    <th width="6%">No</th>
+                    <th width="10%">QR</th>
+                    <th width="18%">NIS</th>
+                    <th>Nama Siswa</th>
+                    <th width="16%">Kelas</th>
+                    <th width="16%">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodySiswa">
+                  <tr><td colspan="6" class="text-center py-4 text-muted">Memuat data siswa...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: MANAJEMEN DATA GURU -->
+        <div class="tab-pane fade" id="tabGuru">
+          <div class="card card-dashboard p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <div>
+                <h5 class="fw-bold mb-0 text-primary">Master Data Guru & Kepala Sekolah</h5>
+                <small class="text-muted">Catatan: Baris pertama (Kepala Sekolah) digunakan otomatis untuk TTD laporan PDF.</small>
+              </div>
+              <div class="d-flex gap-2">
+                <input type="text" id="cariGuru" class="form-control form-control-sm" placeholder="Cari NIP / Nama Guru..." onkeyup="filterTabelGuru()">
+                <button class="btn btn-primary btn-sm fw-bold text-nowrap" onclick="bukaModalGuru()">
+                  <i class="fa-solid fa-plus me-1"></i> Tambah Guru
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive" style="max-height: 550px;">
+              <table class="table table-hover table-bordered align-middle" style="font-size: 0.9rem;">
+                <thead class="table-light text-center sticky-top">
+                  <tr>
+                    <th width="6%">No</th>
+                    <th width="10%">QR</th>
+                    <th width="22%">NIP / Kode</th>
+                    <th>Nama Guru</th>
+                    <th width="20%">Jabatan / Mapel</th>
+                    <th width="16%">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyGuru">
+                  <tr><td colspan="6" class="text-center py-4 text-muted">Memuat data guru...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: MANAJEMEN USER ADMIN -->
+        <div class="tab-pane fade" id="tabAdmin">
+          <div class="card card-dashboard p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0 text-primary">Daftar Akun Admin / Petugas</h5>
+              <button class="btn btn-success btn-sm fw-bold" onclick="bukaModalAdmin()">
+                <i class="fa-solid fa-user-plus me-1"></i> Tambah User Admin
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover table-bordered align-middle" style="font-size: 0.9rem;">
+                <thead class="table-light text-center">
+                  <tr>
+                    <th width="7%">No</th>
+                    <th width="20%">Username</th>
+                    <th>Nama Lengkap</th>
+                    <th width="20%">Role</th>
+                    <th width="16%">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyAdmin">
+                  <tr><td colspan="5" class="text-center py-4 text-muted">Memuat data admin...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH / EDIT SISWA -->
+  <div class="modal fade" id="modalSiswa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px;">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="judulModalSiswa">Tambah Siswa Baru</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="formSiswa">
+            <input type="hidden" id="siswaRowIndex">
+            <div class="mb-3">
+              <label class="form-label fw-bold small">NIS</label>
+              <input type="text" id="siswaNis" class="form-control" placeholder="Contoh: 0116786133" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Nama Lengkap Siswa</label>
+              <input type="text" id="siswaNama" class="form-control" placeholder="Masukkan nama lengkap..." required>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-bold small">Kelas</label>
+              <input type="text" id="siswaKelas" class="form-control" placeholder="Contoh: X TPM 1" required>
+            </div>
+            <button type="submit" id="btnSimpanSiswa" class="btn btn-primary w-100 fw-bold py-2">Simpan Data Siswa</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH / EDIT GURU -->
+  <div class="modal fade" id="modalGuru" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px;">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold" id="judulModalGuru">Tambah Data Guru</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="formGuru">
+            <input type="hidden" id="guruRowIndex">
+            <div class="mb-3">
+              <label class="form-label fw-bold small">NIP / Kode Guru</label>
+              <input type="text" id="guruNip" class="form-control" placeholder="Contoh: 19650525 199103 1 020" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Nama Guru & Gelar</label>
+              <input type="text" id="guruNama" class="form-control" placeholder="Contoh: SUWANDRA, S.Pd., M.Pd." required>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-bold small">Jabatan / Mata Pelajaran</label>
+              <input type="text" id="guruJabatan" class="form-control" placeholder="Contoh: FISIKA / Kepala Sekolah">
+            </div>
+            <button type="submit" id="btnSimpanGuru" class="btn btn-primary w-100 fw-bold py-2">Simpan Data Guru</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH / EDIT USER ADMIN -->
+  <div class="modal fade" id="modalAdmin" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px;">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold" id="judulModalAdmin">Tambah User Admin</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="formAdmin">
+            <input type="hidden" id="adminRowIndex">
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Nama Lengkap Petugas</label>
+              <input type="text" id="adminNama" class="form-control" placeholder="Nama lengkap..." required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Username</label>
+              <input type="text" id="adminUsername" class="form-control" placeholder="Username login..." required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Password</label>
+              <input type="text" id="adminPassword" class="form-control" placeholder="Password login..." required>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-bold small">Role</label>
+              <select id="adminRole" class="form-select">
+                <option value="Super Admin">Super Admin</option>
+                <option value="Petugas Presensi">Petugas Presensi</option>
+              </select>
+            </div>
+            <button type="submit" id="btnSimpanAdmin" class="btn btn-success w-100 fw-bold py-2">Simpan User Admin</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const RAW_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxHhTfb4ENIEkA_QJEiT8dhYLeysGrXxZw7yH--oE1-PZ0vnmMm1vVpT1jcd3toRbwN/exec";
+    const WEB_APP_URL = RAW_WEB_APP_URL.replace(/\/u\/\d+\//, '/');
+
+    let dataSiswa = [], dataGuru = [], dataAdmin = [];
+    let modSiswa, modGuru, modAdmin;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      modSiswa = new bootstrap.Modal(document.getElementById('modalSiswa'));
+      modGuru  = new bootstrap.Modal(document.getElementById('modalGuru'));
+      modAdmin = new bootstrap.Modal(document.getElementById('modalAdmin'));
+
+      const savedUser = sessionStorage.getItem("presensiAdminUser");
+      if (savedUser) tampilkanDashboard(JSON.parse(savedUser));
+    });
+
+    // --- LOGIN & LOGOUT ---
+    document.getElementById('formLogin').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnLogin');
+      const alertBox = document.getElementById('loginAlert');
+      btn.disabled = true; btn.innerText = "Memverifikasi...";
+      alertBox.classList.add('d-none');
+
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: "loginAdminPresensi",
+          username: document.getElementById('loginUser').value,
+          password: document.getElementById('loginPass').value
+        })
+      })
+      .then(res => res.json())
+      .then(res => {
+        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket me-2"></i> MASUK PANEL ADMIN';
+        if (res.success) {
+          sessionStorage.setItem("presensiAdminUser", JSON.stringify(res.user));
+          tampilkanDashboard(res.user);
+        } else {
+          alertBox.innerText = res.message; alertBox.classList.remove('d-none');
+        }
+      })
+      .catch(() => {
+        btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket me-2"></i> MASUK PANEL ADMIN';
+        alertBox.innerText = "Gagal terhubung ke server Apps Script!"; alertBox.classList.remove('d-none');
+      });
+    });
+
+    function tampilkanDashboard(user) {
+      document.getElementById('loginSection').classList.add('d-none');
+      document.getElementById('dashboardSection').classList.remove('d-none');
+      document.getElementById('infoAdminLogin').innerText = `Halo, ${user.nama} (${user.role})`;
+      muatSemuaData();
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem("presensiAdminUser");
+      location.reload();
+    }
+
+    function muatSemuaData() {
+      fetch(`${WEB_APP_URL}?action=getAdminPresensiData`)
+        .then(res => res.json())
+        .then(res => {
+          dataSiswa = res.siswa || [];
+          dataGuru  = res.guru || [];
+          dataAdmin = res.admin || [];
+
+          // Isi dropdown filter kelas
+          const selKelas = document.getElementById('filterKelasSiswa');
+          const curVal = selKelas.value;
+          const kelasUnik = [...new Set(dataSiswa.map(s => s.kelas).filter(Boolean))].sort();
+          selKelas.innerHTML = '<option value="">Semua Kelas</option>' + kelasUnik.map(k => `<option value="${k}">${k}</option>`).join('');
+          selKelas.value = curVal;
+
+          filterTabelSiswa();
+          renderGuru(dataGuru);
+          renderAdmin(dataAdmin);
+        });
+    }
+
+    // --- 1. RENDER & CRUD SISWA ---
+    function renderSiswa(list) {
+      document.getElementById('totalSiswaBadge').innerText = `Menampilkan: ${list.length} dari ${dataSiswa.length} siswa`;
+      const tbody = document.getElementById('tbodySiswa');
+      if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">Tidak ada data siswa.</td></tr>'; return; }
+
+      tbody.innerHTML = list.map((s, i) => {
+        const qr = `https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=${encodeURIComponent(s.nis)}`;
+        return `<tr>
+          <td class="text-center">${i + 1}</td>
+          <td class="text-center"><img src="${qr}" width="45" height="45"></td>
+          <td class="text-center fw-bold text-primary">${s.nis}</td>
+          <td class="fw-semibold">${s.nama}</td>
+          <td class="text-center"><span class="badge bg-secondary">${s.kelas}</span></td>
+          <td class="text-center text-nowrap">
+            <button class="btn btn-sm btn-outline-dark" title="Cetak Kartu QR" onclick="cetakKartuQR('KARTU PRESENSI SISWA', '${s.nis}', '${s.nama.replace(/'/g, "\\'")}', 'Kelas: ${s.kelas}')"><i class="fa-solid fa-qrcode"></i></button>
+            <button class="btn btn-sm btn-warning" title="Edit" onclick="editSiswa(${s.rowIndex})"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-sm btn-danger" title="Hapus" onclick="hapusData('hapusSiswaPresensi', ${s.rowIndex}, '${s.nama.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function filterTabelSiswa() {
+      const kls = document.getElementById('filterKelasSiswa').value;
+      const q = document.getElementById('cariSiswa').value.toLowerCase();
+      renderSiswa(dataSiswa.filter(s => 
+        (!kls || s.kelas === kls) &&
+        (s.nis.toLowerCase().includes(q) || s.nama.toLowerCase().includes(q))
+      ));
+    }
+
+    function bukaModalSiswa() {
+      document.getElementById('judulModalSiswa').innerText = "Tambah Siswa Baru";
+      document.getElementById('siswaRowIndex').value = "";
+      document.getElementById('formSiswa').reset();
+      modSiswa.show();
+    }
+
+    function editSiswa(rIdx) {
+      const s = dataSiswa.find(x => x.rowIndex === rIdx);
+      if (!s) return;
+      document.getElementById('judulModalSiswa').innerText = "Edit Data Siswa";
+      document.getElementById('siswaRowIndex').value = s.rowIndex;
+      document.getElementById('siswaNis').value = s.nis;
+      document.getElementById('siswaNama').value = s.nama;
+      document.getElementById('siswaKelas').value = s.kelas;
+      modSiswa.show();
+    }
+
+    document.getElementById('formSiswa').addEventListener('submit', function(e) {
+      e.preventDefault();
+      kirimPost({
+        action: "simpanSiswaPresensi",
+        rowIndex: document.getElementById('siswaRowIndex').value,
+        nis: document.getElementById('siswaNis').value,
+        nama: document.getElementById('siswaNama').value,
+        kelas: document.getElementById('siswaKelas').value
+      }, 'btnSimpanSiswa', modSiswa);
+    });
+
+    // --- 2. RENDER & CRUD GURU ---
+    function renderGuru(list) {
+      const tbody = document.getElementById('tbodyGuru');
+      if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">Tidak ada data guru.</td></tr>'; return; }
+
+      tbody.innerHTML = list.map((g, i) => {
+        const qr = `https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=${encodeURIComponent(g.nip)}`;
+        const isKepsek = (g.rowIndex === 2);
+        return `<tr class="${isKepsek ? 'table-info' : ''}">
+          <td class="text-center">${i + 1}</td>
+          <td class="text-center"><img src="${qr}" width="45" height="45"></td>
+          <td class="text-center fw-bold text-primary">${g.nip}</td>
+          <td class="fw-semibold">${g.nama} ${isKepsek ? '<span class="badge bg-primary ms-1">TTD Kepsek</span>' : ''}</td>
+          <td>${g.jabatan || '-'}</td>
+          <td class="text-center text-nowrap">
+            <button class="btn btn-sm btn-outline-dark" title="Cetak Kartu QR" onclick="cetakKartuQR('KARTU PRESENSI GURU', '${g.nip}', '${g.nama.replace(/'/g, "\\'")}', '${(g.jabatan || 'Guru SMKN 1 Purwoasri').replace(/'/g, "\\'")}')"><i class="fa-solid fa-qrcode"></i></button>
+            <button class="btn btn-sm btn-warning" title="Edit" onclick="editGuru(${g.rowIndex})"><i class="fa-solid fa-pen"></i></button>
+            ${!isKepsek ? `<button class="btn btn-sm btn-danger" title="Hapus" onclick="hapusData('hapusGuruPresensi', ${g.rowIndex}, '${g.nama.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash"></i></button>` : ''}
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function filterTabelGuru() {
+      const q = document.getElementById('cariGuru').value.toLowerCase();
+      renderGuru(dataGuru.filter(g => g.nip.toLowerCase().includes(q) || g.nama.toLowerCase().includes(q) || g.jabatan.toLowerCase().includes(q)));
+    }
+
+    function bukaModalGuru() {
+      document.getElementById('judulModalGuru').innerText = "Tambah Data Guru";
+      document.getElementById('guruRowIndex').value = "";
+      document.getElementById('formGuru').reset();
+      modGuru.show();
+    }
+
+    function editGuru(rIdx) {
+      const g = dataGuru.find(x => x.rowIndex === rIdx);
+      if (!g) return;
+      document.getElementById('judulModalGuru').innerText = "Edit Data Guru";
+      document.getElementById('guruRowIndex').value = g.rowIndex;
+      document.getElementById('guruNip').value = g.nip;
+      document.getElementById('guruNama').value = g.nama;
+      document.getElementById('guruJabatan').value = g.jabatan;
+      modGuru.show();
+    }
+
+    document.getElementById('formGuru').addEventListener('submit', function(e) {
+      e.preventDefault();
+      kirimPost({
+        action: "simpanGuruPresensi",
+        rowIndex: document.getElementById('guruRowIndex').value,
+        nip: document.getElementById('guruNip').value,
+        nama: document.getElementById('guruNama').value,
+        jabatan: document.getElementById('guruJabatan').value
+      }, 'btnSimpanGuru', modGuru);
+    });
+
+    // --- 3. RENDER & CRUD USER ADMIN ---
+    function renderAdmin(list) {
+      const tbody = document.getElementById('tbodyAdmin');
+      tbody.innerHTML = list.map((a, i) => `<tr>
+        <td class="text-center">${i + 1}</td>
+        <td class="fw-bold text-primary">${a.username}</td>
+        <td>${a.nama}</td>
+        <td class="text-center"><span class="badge bg-dark">${a.role}</span></td>
+        <td class="text-center text-nowrap">
+          <button class="btn btn-sm btn-warning" onclick="editAdmin(${a.rowIndex})"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-sm btn-danger" onclick="hapusData('hapusAdminPresensi', ${a.rowIndex}, '${a.username}')"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>`).join('');
+    }
+
+    function bukaModalAdmin() {
+      document.getElementById('judulModalAdmin').innerText = "Tambah User Admin";
+      document.getElementById('adminRowIndex').value = "";
+      document.getElementById('formAdmin').reset();
+      modAdmin.show();
+    }
+
+    function editAdmin(rIdx) {
+      const a = dataAdmin.find(x => x.rowIndex === rIdx);
+      if (!a) return;
+      document.getElementById('judulModalAdmin').innerText = "Edit User Admin";
+      document.getElementById('adminRowIndex').value = a.rowIndex;
+      document.getElementById('adminNama').value = a.nama;
+      document.getElementById('adminUsername').value = a.username;
+      document.getElementById('adminPassword').value = a.password;
+      document.getElementById('adminRole').value = a.role;
+      modAdmin.show();
+    }
+
+    document.getElementById('formAdmin').addEventListener('submit', function(e) {
+      e.preventDefault();
+      kirimPost({
+        action: "simpanAdminPresensi",
+        rowIndex: document.getElementById('adminRowIndex').value,
+        nama: document.getElementById('adminNama').value,
+        username: document.getElementById('adminUsername').value,
+        password: document.getElementById('adminPassword').value,
+        role: document.getElementById('adminRole').value
+      }, 'btnSimpanAdmin', modAdmin);
+    });
+
+    // --- CETAK KARTU QR CODE ---
+    function cetakKartuQR(judulKartu, kode, nama, subInfo) {
+      const qr = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(kode)}`;
+      const w = window.open('', '_blank');
+      w.document.write(`
+        <html><body style="font-family:Arial,sans-serif;text-align:center;padding:25px;">
+          <div style="border:2px solid #0d6efd;border-radius:14px;padding:18px;width:250px;display:inline-block;">
+            <div style="font-size:9pt;font-weight:bold;color:#0d6efd;">SMK NEGERI 1 PURWOASRI</div>
+            <div style="font-size:8pt;color:#555;margin-bottom:10px;">${judulKartu}</div>
+            <img src="${qr}" width="160" height="160">
+            <h4 style="margin:10px 0 3px 0;font-size:11pt;">${nama}</h4>
+            <div style="font-size:9pt;font-weight:bold;">${kode}</div>
+            <div style="font-size:8.5pt;color:#666;margin-top:2px;">${subInfo}</div>
+          </div>
+          <script>window.onload=function(){window.print();}<\/script>
+        </body></html>
+      `);
+      w.document.close();
+    }
+
+    // --- HELPER FETCH POST & DELETE ---
+    function kirimPost(payload, btnId, modalObj) {
+      const btn = document.getElementById(btnId);
+      const oldText = btn.innerHTML;
+      btn.disabled = true; btn.innerText = "Menyimpan...";
+
+      fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+        .then(res => res.json())
+        .then(res => {
+          btn.disabled = false; btn.innerHTML = oldText;
+          if (res.success) {
+            modalObj.hide();
+            muatSemuaData();
+          } else {
+            alert(res.message);
+          }
+        })
+        .catch(() => {
+          btn.disabled = false; btn.innerHTML = oldText;
+          alert("Terjadi kesalahan jaringan saat menyimpan data.");
+        });
+    }
+
+    function hapusData(actionName, rowIndex, label) {
+      if (!confirm(`Yakin ingin menghapus "${label}"?`)) return;
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: actionName, rowIndex: rowIndex })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) muatSemuaData();
+        else alert(res.message);
+      });
+    }
+  </script>
+</body>
+</html>
